@@ -3,7 +3,7 @@ import fs from "fs"
 cloudinary.config({ 
   cloud_name: process.env.CLOUD_NAME, 
   api_key: process.env.CLOUDINARY_API_KEY, 
-  api_secret: CLOUDINARY_API_SECRET
+  api_secret:process.env.CLOUDINARY_API_SECRET
 });
 
 
@@ -16,7 +16,7 @@ const uploadOnCloudinary= async (localFilePath)=>{
             resource_type:"auto"
         })
         //file uploaded successfully
-        console.log("file uploaded with response :",response.url)
+        fs.unlinkSync(localFilePath)
         return response
     } catch (error) {
         fs.unlinkSync(localFilePath)//remove locally saved temp file as upload failed
@@ -24,4 +24,19 @@ const uploadOnCloudinary= async (localFilePath)=>{
     }
 }
 
-export {uploadOnCloudinary}
+const deleteFromCloudinary = async (url) => {
+  try {
+    if (!url) return;
+
+    // Extract public_id from Cloudinary URL
+    const parts = url.split("/");
+    const filename = parts.pop(); // e.g. "avatar_12345.jpg"
+    const publicId = parts.slice(parts.indexOf("upload") + 1).join("/").replace(/\.[^/.]+$/, "");
+
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result;
+  } catch (error) {
+    console.error("Cloudinary delete error:", error);
+  }
+};
+export {uploadOnCloudinary,deleteFromCloudinary}
